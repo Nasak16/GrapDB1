@@ -17,7 +17,15 @@ from neo4j_service import (
     search_books,
     seed_demo_data,
 )
-from ui_avatar import avatar_html, find_photo
+from ui_avatar import (
+    avatar_html,
+    find_photo,
+    find_profile_photo,
+    profile_avatar_html,
+    save_profile_photo,
+)
+
+OWNER_NAME = "Nasak"  # ชื่อที่โชว์ใต้รูปผู้ดูแลระบบใน sidebar
 
 st.set_page_config(
     page_title="GraphBook Recommender",
@@ -98,6 +106,8 @@ require_connection()
 with st.sidebar:
     st.markdown("## 📚 GraphBook")
     st.caption("Neo4j Aura + Streamlit")
+    st.markdown(profile_avatar_html(OWNER_NAME, size=104), unsafe_allow_html=True)
+    st.caption(f"{OWNER_NAME} · ผู้ดูแลระบบ" + ("" if find_profile_photo() else " (ยังไม่ตั้งรูป)"))
     page = st.radio(
         "เมนู",
         ["Dashboard", "Recommendations", "Book Search", "Borrow / Rate", "Graph Explorer", "Admin / Setup"],
@@ -241,3 +251,39 @@ elif page == "Admin / Setup":
             seed_demo_data()
         st.success("สร้างข้อมูลตัวอย่างเรียบร้อยแล้ว")
         st.rerun()
+
+    st.divider()
+    st.subheader("🖼️ รูปประจำตัวผู้ดูแลระบบ")
+    st.caption("ตั้งไว้ครั้งเดียว ใช้โชว์ที่ sidebar ทุกหน้า (ไม่ผูกกับนักศึกษาในฐานข้อมูล)")
+
+    current_photo = find_profile_photo()
+    photo_col, info_col = st.columns([1, 3])
+    with photo_col:
+        st.markdown(profile_avatar_html(OWNER_NAME, size=120), unsafe_allow_html=True)
+    with info_col:
+        if current_photo:
+            st.write(f"ใช้ไฟล์: `assets/{current_photo.name}`")
+        else:
+            st.info("ยังไม่มีรูป — อัปโหลดด้านล่าง หรือวางไฟล์ที่ `assets/profile.jpg`")
+
+        upload = st.file_uploader(
+            "เลือกรูป (png / jpg / jpeg / webp, ไม่เกิน 8 MB)",
+            type=["png", "jpg", "jpeg", "webp"],
+        )
+        if upload is not None:
+            st.image(upload, caption=f"ตัวอย่าง: {upload.name}", width=180)
+            if st.button("บันทึกรูปนี้", type="primary"):
+                try:
+                    saved = save_profile_photo(upload.getvalue(), upload.name)
+                except ValueError as exc:
+                    st.error(str(exc))
+                else:
+                    st.success(f"บันทึกแล้ว → assets/{saved.name}")
+                    st.rerun()
+
+        if current_photo:
+            st.caption(
+                "ต้องการลบรูป: ลบไฟล์ `assets/profile.*` แล้ว rerun — "
+                "บน Streamlit Cloud รูปที่อัปโหลดจะหายเมื่อแอป restart ถ้าอยากถาวรให้ commit ไฟล์ขึ้น git"
+            )
+
