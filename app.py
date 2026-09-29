@@ -18,8 +18,6 @@ from neo4j_service import (
     seed_demo_data,
 )
 from ui_avatar import (
-    avatar_html,
-    find_photo,
     find_profile_photo,
     profile_avatar_html,
     save_profile_photo,
@@ -141,17 +139,11 @@ if page == "Dashboard":
     if profile:
         left, right = st.columns([1, 2])
         with left:
-            st.markdown(
-                avatar_html(profile["student_id"], profile["name"]),
-                unsafe_allow_html=True,
-            )
             st.markdown(f"### {profile['name']}")
             st.write(f"**รหัส:** {profile['student_id']}")
             st.write(f"**สาขา:** {profile['major']}")
             st.write(f"**ชั้นปี:** {profile['year']}")
             st.write("**ความสนใจ:** " + (", ".join(profile["interests"]) or "ยังไม่มี"))
-            if find_photo(profile["student_id"]) is None:
-                st.caption("ยังไม่มีรูป — วางไฟล์ที่ assets/students/S001.jpg เพื่อแสดงรูปจริง")
         with right:
             st.markdown("### ประวัติการยืม")
             if profile["borrowed"]:
